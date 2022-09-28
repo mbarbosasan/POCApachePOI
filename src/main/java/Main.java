@@ -12,23 +12,21 @@ import java.util.Date;
 
 public class Main {
     public static void main(String[] args) {
-
-        ExcelUtil excelModel = new ExcelUtil("C:/Users/Usuário/Downloads/NewExcel1.xls");
+        ExcelUtil excelUtil = new ExcelUtil("C:/temp/new Folder/newExcel1.xls");
+        try {
+            excelUtil.createExcelModel("UN-RIO");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidFormatException e) {
+            throw new RuntimeException(e);
+        }
 
         try {
-            excelModel.readExcel();
+            excelUtil.readExcel(excelUtil.getBytes());
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         } catch (InvalidFormatException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-//        try {
-//            excelModel.createExcelModel("UN-RIO");
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        } catch (InvalidFormatException e) {
-//            throw new RuntimeException(e);
-//        }
-
     }
 }

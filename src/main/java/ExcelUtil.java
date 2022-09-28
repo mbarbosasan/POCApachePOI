@@ -1,9 +1,7 @@
-import com.sun.corba.se.spi.orbutil.threadpool.Work;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddressList;
-import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
@@ -13,6 +11,7 @@ import java.util.List;
 
 public class ExcelUtil {
     private String path;
+    private byte[] bytes;
     private List<String> sampleGrandezas = new ArrayList<>();
     private List<String> sampleElementoEP = new ArrayList<>();
     private List<String> sampleUnidadeElementos = new ArrayList<>();
@@ -21,7 +20,11 @@ public class ExcelUtil {
         this.path = path;
     }
 
-    public XSSFWorkbook createExcelModel(String unidadeNegocio) throws IOException, InvalidFormatException {
+    public byte[] getBytes() {
+        return bytes;
+    }
+
+    public byte[] createExcelModel(String unidadeNegocio) throws IOException, InvalidFormatException {
         XSSFWorkbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Model");
 
@@ -92,7 +95,7 @@ public class ExcelUtil {
         exampleRow.add("Servidor");
         exampleRow.add("TAG/PATH/PI Formula");
         exampleRow.add("Unidade na Fonte");
-        exampleRow.add("PROCESSADA!");
+        exampleRow.add("");
 
         sampleGrandezas.addAll(exampleRow);
         sampleElementoEP.addAll(exampleRow);
@@ -124,20 +127,14 @@ public class ExcelUtil {
             }
         }
 
-        getAllVariaveis(sheet);
-
-        File file = new File(this.path);
-        FileOutputStream fileOutputStream = new FileOutputStream(file);
-        workbook.write(fileOutputStream);
-        return workbook;
+        return convertToByte(workbook);
     }
 
-    public void readExcel() throws IOException, InvalidFormatException {
-        FileInputStream fis = new FileInputStream(this.path);
-        Workbook workbook = WorkbookFactory.create(fis);
+    public void readExcel(byte[] bytes) throws IOException, InvalidFormatException {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+        Workbook workbook = WorkbookFactory.create(byteArrayInputStream);
         Sheet sheet = workbook.getSheet("Model");
         getAllVariaveis(sheet);
-
     }
 
     public void setTableHeaderStyle(Sheet sheet, Cell cell) {
@@ -185,7 +182,7 @@ public class ExcelUtil {
         sheet.addValidationData(validation);
     }
 
-    public void getAllVariaveis(Sheet sheet) {
+    public List<Variavel> getAllVariaveis(Sheet sheet) {
         List<Variavel> listVariaveis = new ArrayList<>();
         for (Row row : sheet) {
                 if (row.getCell(0).getStringCellValue().equals("INCLUIR") && checkRowsFulfilled(row)) {
@@ -198,6 +195,8 @@ public class ExcelUtil {
                             row.getCell(6).getStringCellValue(),
                             row.getCell(7).getStringCellValue());
                     changeIntoBold(sheet.getWorkbook(), row.getCell(8));
+                    //TODO
+                    //Inserir metodo de INSERT dos dados.
                     row.getCell(8).setCellValue(new Date() + "- Processada!");
                     listVariaveis.add(variavel);
                     sheet.autoSizeColumn(8);
@@ -206,12 +205,15 @@ public class ExcelUtil {
         for (Variavel variavel : listVariaveis) {
             System.out.println(variavel);
         }
+        return listVariaveis;
     }
 
     public boolean checkRowsFulfilled(Row row) {
         for (Cell cell : row) {
-            if (cell.getStringCellValue().length() < 0) {
-                row.getCell(8).setCellValue(new Date() + " Dados incompletos!");
+            //TODO
+            //Inserir o comentario de erro ao identificar linhas que nao foram completamente preenchidas.
+            if (cell.getStringCellValue().length() <= 0) {
+                row.getCell(8).setCellValue(new Date() + "- Dados incompletos!");
                 return false;
             }
         }
@@ -228,5 +230,19 @@ public class ExcelUtil {
         cellStyle.setBorderLeft(CellStyle.BORDER_THIN);
         cellStyle.setBorderRight(CellStyle.BORDER_THIN);
         cell.setCellStyle(cellStyle);
+    }
+
+    public byte[] convertToByte(Workbook workbook) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            workbook.write(bos);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            bos.close();
+        }
+
+        this.bytes = bos.toByteArray();
+        return this.bytes;
     }
 }
