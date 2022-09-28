@@ -137,6 +137,58 @@ public class ExcelUtil {
         getAllVariaveis(sheet);
     }
 
+    public List<Variavel> getAllVariaveis(Sheet sheet) {
+        List<Variavel> listVariaveis = new ArrayList<>();
+        for (Row row : sheet) {
+                if (row.getCell(0).getStringCellValue().equals("INCLUIR") && checkRowsFulfilled(row)) {
+                    Variavel variavel = new Variavel(
+                            row.getCell(1).getStringCellValue(),
+                            row.getCell(2).getStringCellValue(),
+                            row.getCell(3).getStringCellValue(),
+                            row.getCell(4).getStringCellValue(),
+                            row.getCell(5).getStringCellValue(),
+                            row.getCell(6).getStringCellValue(),
+                            row.getCell(7).getStringCellValue());
+                    changeIntoBold(sheet.getWorkbook(), row.getCell(8));
+                    //TODO
+                    //Inserir metodo de INSERT dos dados.
+                    row.getCell(8).setCellValue(new Date() + "- Processada!");
+                    System.out.println(row.getCell(8));
+                    listVariaveis.add(variavel);
+                    sheet.autoSizeColumn(8);
+                }
+        }
+        for (Variavel variavel : listVariaveis) {
+            System.out.println(variavel);
+        }
+        return listVariaveis;
+    }
+
+    public boolean checkRowsFulfilled(Row row) {
+        for (Cell cell : row) {
+            if (cell.getCellType() == Cell.CELL_TYPE_BLANK) {
+                Cell cellStatus = row.createCell(8);
+                cellStatus.setCellValue(new Date() + "- Dados incompletos!");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public byte[] convertToByte(Workbook workbook) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            workbook.write(bos);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            bos.close();
+        }
+
+        this.bytes = bos.toByteArray();
+        return this.bytes;
+    }
+
     public void setTableHeaderStyle(Sheet sheet, Cell cell) {
         CellStyle cellStyle = sheet.getWorkbook().createCellStyle();
         //Background
@@ -182,44 +234,6 @@ public class ExcelUtil {
         sheet.addValidationData(validation);
     }
 
-    public List<Variavel> getAllVariaveis(Sheet sheet) {
-        List<Variavel> listVariaveis = new ArrayList<>();
-        for (Row row : sheet) {
-                if (row.getCell(0).getStringCellValue().equals("INCLUIR") && checkRowsFulfilled(row)) {
-                    Variavel variavel = new Variavel(
-                            row.getCell(1).getStringCellValue(),
-                            row.getCell(2).getStringCellValue(),
-                            row.getCell(3).getStringCellValue(),
-                            row.getCell(4).getStringCellValue(),
-                            row.getCell(5).getStringCellValue(),
-                            row.getCell(6).getStringCellValue(),
-                            row.getCell(7).getStringCellValue());
-                    changeIntoBold(sheet.getWorkbook(), row.getCell(8));
-                    //TODO
-                    //Inserir metodo de INSERT dos dados.
-                    row.getCell(8).setCellValue(new Date() + "- Processada!");
-                    listVariaveis.add(variavel);
-                    sheet.autoSizeColumn(8);
-                }
-        }
-        for (Variavel variavel : listVariaveis) {
-            System.out.println(variavel);
-        }
-        return listVariaveis;
-    }
-
-    public boolean checkRowsFulfilled(Row row) {
-        for (Cell cell : row) {
-            //TODO
-            //Inserir o comentario de erro ao identificar linhas que nao foram completamente preenchidas.
-            if (cell.getStringCellValue().length() <= 0) {
-                row.getCell(8).setCellValue(new Date() + "- Dados incompletos!");
-                return false;
-            }
-        }
-        return true;
-    }
-
     public void changeIntoBold(Workbook workbook, Cell cell) {
         CellStyle cellStyle = workbook.createCellStyle();
         Font font = workbook.createFont();
@@ -230,19 +244,5 @@ public class ExcelUtil {
         cellStyle.setBorderLeft(CellStyle.BORDER_THIN);
         cellStyle.setBorderRight(CellStyle.BORDER_THIN);
         cell.setCellStyle(cellStyle);
-    }
-
-    public byte[] convertToByte(Workbook workbook) throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            workbook.write(bos);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            bos.close();
-        }
-
-        this.bytes = bos.toByteArray();
-        return this.bytes;
     }
 }
