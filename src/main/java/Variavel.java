@@ -17,4 +17,16 @@ public class Variavel {
         this.unidadeFonte = unidadeFonte;
     }
 
+    @Override
+    public String toString() {
+        return "Variavel{" +
+                "elementoEP='" + elementoEP + '\'' +
+                ", grandeza='" + grandeza + '\'' +
+                ", tipo='" + tipo + '\'' +
+                ", fonte='" + fonte + '\'' +
+                ", servidor='" + servidor + '\'' +
+                ", tag='" + tag + '\'' +
+                ", unidadeFonte='" + unidadeFonte + '\'' +
+                '}';
+    }
 }

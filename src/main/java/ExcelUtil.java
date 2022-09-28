@@ -1,7 +1,9 @@
+import com.sun.corba.se.spi.orbutil.threadpool.Work;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
@@ -96,7 +98,8 @@ public class ExcelUtil {
         sampleElementoEP.addAll(exampleRow);
 
         //Percorrendo todas as linhas independente se estao preenchidas ou nao para a formatacao da tabela.
-
+        //Comecando em 6 para ignorar o cabeçalho da tabela e considerar somente as linhas.
+        //Acabando em 50 para termos um número consideravel de celulas já seguindo o padrão.
         int rowStart = 6;
         int rowEnd = 50;
 
@@ -105,7 +108,7 @@ public class ExcelUtil {
             for (int i = 0; i <= 8; i++) {
                 Cell currentCell = row.createCell(i);
                 setTableCellStyle(sheet, currentCell);
-                if (row.getRowNum() < 10) {
+                if (row.getRowNum() < 12) {
                     currentCell.setCellValue(exampleRow.get(i));
                     switch (currentCell.getColumnIndex()) {
                         case 1:
@@ -127,6 +130,14 @@ public class ExcelUtil {
         FileOutputStream fileOutputStream = new FileOutputStream(file);
         workbook.write(fileOutputStream);
         return workbook;
+    }
+
+    public void readExcel() throws IOException, InvalidFormatException {
+        FileInputStream fis = new FileInputStream(this.path);
+        Workbook workbook = WorkbookFactory.create(fis);
+        Sheet sheet = workbook.getSheet("Model");
+        getAllVariaveis(sheet);
+
     }
 
     public void setTableHeaderStyle(Sheet sheet, Cell cell) {
@@ -177,15 +188,45 @@ public class ExcelUtil {
     public void getAllVariaveis(Sheet sheet) {
         List<Variavel> listVariaveis = new ArrayList<>();
         for (Row row : sheet) {
-            for (Cell cell : row) {
-                if (cell.getRowIndex() > 6) {
-                    Variavel variavel = new Variavel();
+                if (row.getCell(0).getStringCellValue().equals("INCLUIR") && checkRowsFulfilled(row)) {
+                    Variavel variavel = new Variavel(
+                            row.getCell(1).getStringCellValue(),
+                            row.getCell(2).getStringCellValue(),
+                            row.getCell(3).getStringCellValue(),
+                            row.getCell(4).getStringCellValue(),
+                            row.getCell(5).getStringCellValue(),
+                            row.getCell(6).getStringCellValue(),
+                            row.getCell(7).getStringCellValue());
+                    changeIntoBold(sheet.getWorkbook(), row.getCell(8));
+                    row.getCell(8).setCellValue(new Date() + "- Processada!");
+                    listVariaveis.add(variavel);
+                    sheet.autoSizeColumn(8);
                 }
-                listVariaveis.addAll(list);
+        }
+        for (Variavel variavel : listVariaveis) {
+            System.out.println(variavel);
+        }
+    }
+
+    public boolean checkRowsFulfilled(Row row) {
+        for (Cell cell : row) {
+            if (cell.getStringCellValue().length() < 0) {
+                row.getCell(8).setCellValue(new Date() + " Dados incompletos!");
+                return false;
             }
         }
-        for (String item : listVariaveis) {
-            System.out.println(item);
-        }
+        return true;
+    }
+
+    public void changeIntoBold(Workbook workbook, Cell cell) {
+        CellStyle cellStyle = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        cellStyle.setFont(font);
+        cellStyle.setBorderTop(CellStyle.BORDER_THIN);
+        cellStyle.setBorderBottom(CellStyle.BORDER_THIN);
+        cellStyle.setBorderLeft(CellStyle.BORDER_THIN);
+        cellStyle.setBorderRight(CellStyle.BORDER_THIN);
+        cell.setCellStyle(cellStyle);
     }
 }
